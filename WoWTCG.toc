@@ -1,0 +1,15 @@
+## Interface: 11507
+## Title: WoWTCG
+## Notes: Collect cards by playing the game. Type /tcg to open your collection.
+## Author: Cameron
+## Version: 0.1.0
+## SavedVariables: WoWTCG_DB
+
+Core.lua
+Data\Cards.lua
+PointsEngine.lua
+PackSystem.lua
+ChatFlex.lua
+UI\CardWidget.lua
+UI\PackOpening.lua
+UI\Collection.lua

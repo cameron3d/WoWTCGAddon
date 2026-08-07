@@ -35,3 +35,41 @@ T.test("PackOpening loads and opens a pack under the stub", function()
   ns.PackUI.RevealAll()     -- reveal-all path must not error
   T.ok(true)
 end)
+
+T.test("Collection loads, toggles, filters, and previews under the stub", function()
+  local ns = {}
+  Stub.LoadAddonFile("Core.lua", ns)
+  Stub.LoadAddonFile("Data/Cards.lua", ns)
+  Stub.LoadAddonFile("PackSystem.lua", ns)
+  Stub.LoadAddonFile("ChatFlex.lua", ns)
+  Stub.LoadAddonFile("UI/CardWidget.lua", ns)
+  Stub.LoadAddonFile("UI/PackOpening.lua", ns)
+  Stub.LoadAddonFile("UI/Collection.lua", ns)
+  local db = Stub.FreshDB(ns)
+  local UI = ns.CollectionUI
+  T.ok(type(UI.Toggle) == "function", "Toggle missing")
+  UI.Toggle()   -- builds and shows
+  UI.Toggle()   -- hides
+  UI.Toggle()   -- shows again
+  -- filters
+  UI.filters.rarity = 6
+  T.ok(#UI.FilteredCards() == 10, "rarity filter should isolate the 10 legendaries")
+  UI.filters.rarity = 0
+  UI.filters.owned = "OWNED"
+  T.ok(#UI.FilteredCards() == 0, "empty collection owns nothing")
+  db.collection[ns.CARDS[1].id] = 1
+  T.ok(#UI.FilteredCards() == 1)
+  UI.filters.owned = "ALL"
+  -- search must not leak unowned Epic+ names
+  local legendary = ns.CardsByRarity[6][1]
+  UI.filters.search = legendary.name:lower()
+  local found = false
+  for _, c in ipairs(UI.FilteredCards()) do
+    if c.id == legendary.id then found = true end
+  end
+  T.ok(not found, "unowned legendary must not appear in search")
+  UI.filters.search = ""
+  UI.Refresh()
+  UI.ShowPreview(ns.CARDS[1])
+  T.ok(true)
+end)

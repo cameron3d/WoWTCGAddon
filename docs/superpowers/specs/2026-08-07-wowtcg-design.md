@@ -160,7 +160,8 @@ Dusting never removes the last copy.
   `SendChatMessage` — plain text with an embedded token, since WoW strips unknown
   custom hyperlinks from real chat.
 - Receiving side: `ChatFrame_AddMessageEventFilter` on all common chat events
-  rewrites `[WoWTCG:412]` → `|cffa335ee|HWoWTCG:card:412|h[Onyxia]|h|r` for users
+  rewrites `[WoWTCG:412]` → `|cffff8000|HWoWTCG:card:412|h[Onyxia]|h|r` (colored by
+  the card's rarity) for users
   running the addon. A hooked `SetItemRef`/`ChatFrame_OnHyperlinkShow` handler opens
   the card preview when clicked. Non-users just see the plain token — harmless.
 - Local pull toasts always print to the player's own chat frame in rarity color.

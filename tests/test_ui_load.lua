@@ -1,0 +1,17 @@
+local Stub = require("wow_api_stub")
+local T = require("testkit")
+
+T.test("CardWidget loads and handles all display modes under the stub", function()
+  local ns = {}
+  Stub.LoadAddonFile("Core.lua", ns)
+  Stub.LoadAddonFile("Data/Cards.lua", ns)
+  Stub.LoadAddonFile("UI/CardWidget.lua", ns)
+  Stub.FreshDB(ns)
+  T.ok(type(ns.CreateCardWidget) == "function", "CreateCardWidget missing")
+  local w = ns.CreateCardWidget(UIParent)
+  w:SetCard(ns.CARDS[1], {})
+  w:SetCard(ns.CARDS[1], { count = 3, isNew = true })
+  w:SetCard(ns.CARDS[1], { faceDown = true })
+  w:SetCard(ns.CARDS[1], { silhouette = true })
+  T.ok(true)
+end)

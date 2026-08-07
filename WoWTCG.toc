@@ -1,4 +1,4 @@
-## Interface: 11507
+## Interface: 11509, 20506
 ## Title: WoWTCG
 ## Notes: Collect cards by playing the game. Type /tcg to open your collection.
 ## Author: Cameron

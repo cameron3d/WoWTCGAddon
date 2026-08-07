@@ -93,8 +93,12 @@ function PackSystem.OpenPack(db)
   for i, card in ipairs(cards) do
     local owned = db.collection[card.id] or 0
     db.collection[card.id] = owned + 1
-    results[i] = { card = card, isNew = owned == 0, count = owned + 1 }
+    -- Any card, any rarity, can roll as a foil copy.
+    local isFoil = ns.forceFoil or rng(ns.FOIL_CHANCE) == 1
+    if isFoil then db.foils[card.id] = (db.foils[card.id] or 0) + 1 end
+    results[i] = { card = card, isNew = owned == 0, count = owned + 1, isFoil = isFoil }
   end
+  ns.forceFoil = nil
   db.stats.packsOpened = db.stats.packsOpened + 1
   ns.NotifyPointsChanged()
   return results
@@ -108,6 +112,11 @@ function PackSystem.DustCard(db, cardID)
   if not card then return false, "unknown card" end
   local value = ns.DUST_VALUES[card.rarity]
   db.collection[cardID] = count - 1
+  -- Non-foil spares dust first; the ledger only shrinks once every
+  -- remaining copy is foil.
+  if db.foils and (db.foils[cardID] or 0) > db.collection[cardID] then
+    db.foils[cardID] = db.collection[cardID]
+  end
   db.points = db.points + value
   db.stats.dusted = db.stats.dusted + value
   ns.NotifyPointsChanged()
@@ -123,6 +132,7 @@ function PackSystem.DustAllDupes(db)
       if card then
         total = total + ns.DUST_VALUES[card.rarity] * (count - 1)
         db.collection[cardID] = 1
+        if db.foils and (db.foils[cardID] or 0) > 1 then db.foils[cardID] = 1 end
       end
     end
   end

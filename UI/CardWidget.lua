@@ -86,9 +86,11 @@ local function HueRGB(h)
 end
 
 ---------------------------------------------------------------------------
--- Foil / glow effects (Rare+ face-up owned cards). One OnUpdate driver per
--- widget on a child frame, so it never collides with the Flip animation's
--- OnUpdate on the button itself.
+-- Card effects. Foil copies (any rarity) carry the foil signature: shine
+-- sweep + shimmer border. Epic+ additionally get glow pulse + sparkles,
+-- Legendary the rainbow wash. One OnUpdate driver per widget on a child
+-- frame, so it never collides with the Flip animation's OnUpdate on the
+-- button itself.
 ---------------------------------------------------------------------------
 
 local BURST_STARS = 6
@@ -99,8 +101,8 @@ local function FX_OnUpdate(fx, dt)
   fx.t = t
   local rarity = fx.rarity or 0
 
-  -- Shine sweep: faster for higher rarity (README motion tokens ~2.8-4s).
-  if rarity >= 4 then
+  -- Foil signature: shine sweep (faster for higher rarity) + shimmer border.
+  if fx.foil then
     local period = (rarity >= 6 and 2.8) or (rarity >= 5 and 3.3) or 3.8
     local cycle = t % period
     local dur = 0.7
@@ -114,13 +116,13 @@ local function FX_OnUpdate(fx, dt)
     else
       for _, seg in ipairs(f.shine) do seg:Hide() end
     end
+    local sh = 0.4 + 0.3 * (1 + math.sin(t * (2 * math.pi / 2.1) + 1.3))
+    for _, s in ipairs(f.shimmer) do s:SetAlpha(sh) end
   end
 
   if rarity >= 5 then
-    -- Glow pulse 0.3 -> 0.85 over ~2.2s; shimmer border 0.4 -> 1 over ~2.1s.
+    -- Glow pulse 0.3 -> 0.85 over ~2.2s.
     f.glow:SetAlpha(0.3 + 0.275 * (1 + math.sin(t * (2 * math.pi / 2.2))))
-    local sh = 0.4 + 0.3 * (1 + math.sin(t * (2 * math.pi / 2.1) + 1.3))
-    for _, s in ipairs(f.shimmer) do s:SetAlpha(sh) end
     -- Corner sparkles on staggered loops.
     local a1 = math.max(0, math.sin(t * (2 * math.pi / 1.9)))
     local a2 = math.max(0, math.sin(t * (2 * math.pi / 2.5) + 2.1))
@@ -160,6 +162,7 @@ end
 local function StopFX(f)
   f.fxFrame:SetScript("OnUpdate", nil)
   f.fxFrame.rarity = 0
+  f.fxFrame.foil = nil
   f.fxFrame.burstT = nil
   for _, seg in ipairs(f.shine) do seg:Hide() end
   f.glow:Hide()
@@ -170,18 +173,21 @@ local function StopFX(f)
   HideAll(f.burst)
 end
 
-local function StartFX(f, rarity)
+local function StartFX(f, rarity, foil)
   StopFX(f)
-  if rarity < 4 then return end
+  if not foil and rarity < 5 then return end
   local fx = f.fxFrame
   fx.t = 0
   fx.rarity = rarity
-  if rarity >= 5 then
-    local c = ns.RARITY_COLORS[rarity]
-    f.glow:SetVertexColor(c.r, c.g, c.b)
-    f.glow:Show()
+  fx.foil = foil and true or nil
+  local c = ns.RARITY_COLORS[rarity]
+  if foil then
     SetRingColor(f.shimmer, c.r, c.g, c.b, 1)
     ShowAll(f.shimmer)
+  end
+  if rarity >= 5 then
+    f.glow:SetVertexColor(c.r, c.g, c.b)
+    f.glow:Show()
     f.sparkle1:Show()
     f.sparkle2:Show()
   end
@@ -235,20 +241,19 @@ function Card:SetCard(card, opts)
     self.artPlate:SetColorTexture(0.05, 0.04, 0.03, 0.9)
     SetRingColor(self.artLine, SIL_EDGE[1], SIL_EDGE[2], SIL_EDGE[3], 0.6)
     self.qMark:Show()
-    local hidden = card.rarity >= 5   -- unowned Epic+ stays a mystery
-    if hidden then
-      self.nameText:SetText("? ? ?")
+    -- Locked cards are anonymous: no name, no type, at every rarity.
+    local epicPlus = card.rarity >= 5
+    self.nameText:SetText("? ? ?")
+    if epicPlus then
       self.nameText:SetTextColor(SIL_EPIC[1], SIL_EPIC[2], SIL_EPIC[3])
     else
-      self.nameText:SetText(card.name)
       self.nameText:SetTextColor(SIL_NAME[1], SIL_NAME[2], SIL_NAME[3])
     end
     self.divDiamond:SetVertexColor(SIL_TYPE[1], SIL_TYPE[2], SIL_TYPE[3])
     self.divDiamond:SetAlpha(0.8)
-    self.typeText:SetText(string.upper(ns.RARITY_NAMES[card.rarity] .. " "
-      .. (hidden and "???" or card.type)))
+    self.typeText:SetText(string.upper(ns.RARITY_NAMES[card.rarity]) .. " ???")
     self.typeText:SetTextColor(SIL_TYPE[1], SIL_TYPE[2], SIL_TYPE[3])
-    self.flavorText:SetText(hidden and "Undiscovered" or "Not yet collected")
+    self.flavorText:SetText(epicPlus and "Undiscovered" or "Not yet collected")
     self.flavorText:SetTextColor(SIL_NAME[1], SIL_NAME[2], SIL_NAME[3], 0.9)
     self.countText:SetText("")
     self.newBadge:Hide()
@@ -274,7 +279,7 @@ function Card:SetCard(card, opts)
     self.flavorText:SetTextColor(FLAVOR[1], FLAVOR[2], FLAVOR[3])
     self.countText:SetText((opts.count and opts.count > 1) and ("x" .. opts.count) or "")
     if opts.isNew then self.newBadge:Show() else self.newBadge:Hide() end
-    StartFX(self, card.rarity)
+    StartFX(self, card.rarity, opts.foil)
   end
 end
 
@@ -322,6 +327,10 @@ local function OnEnter(self)
   GameTooltip:AddLine(ns.RARITY_NAMES[self.card.rarity] .. " " .. self.card.type, 1, 1, 1)
   if self.card.flavor then
     GameTooltip:AddLine('"' .. self.card.flavor .. '"', 0.8, 0.8, 0.6, true)
+  end
+  if self.opts and self.opts.foil then
+    local n = self.opts.foilCount
+    GameTooltip:AddLine((n and n > 1) and ("Foil x" .. n) or "Foil", 1, 0.85, 0.4)
   end
   if self.tooltipExtra then
     GameTooltip:AddLine(self.tooltipExtra, 0.5, 1, 0.5)

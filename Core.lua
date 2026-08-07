@@ -15,6 +15,7 @@ ns.RARITY_COLORS = {
 ns.PACK_COST   = 100
 ns.PACK_SIZE   = 5
 ns.DUST_VALUES = { 1, 2, 5, 15, 40, 150 }
+ns.FOIL_CHANCE = 20   -- every pulled card is foil 1 time in 20, any rarity
 
 ns.POINT_VALUES = {
   KILL = 2, QUEST = 25, HONOR = 5, BOSS = 50, EXPLORE = 10, LEVEL = 100,
@@ -25,6 +26,7 @@ ns.DEFAULTS = {
   points = 0,
   packs = 0,
   collection = {},
+  foils = {},        -- [cardId] = number of owned copies that are foil
   pity = { epic = 0, legendary = 0 },
   stats = { packsOpened = 0, totalPoints = 0, dusted = 0, byReason = {} },
   settings = {
@@ -137,13 +139,16 @@ function ns.HandleDebug(rest)
   elseif sub == "legendary" then
     ns.forceLegendary = true
     ns.Print("next pack will contain a Legendary")
+  elseif sub == "foil" then
+    ns.forceFoil = true
+    ns.Print("next pack will be all foils")
   elseif sub == "resetpity" then
     db.pity.epic, db.pity.legendary = 0, 0
     ns.Print("pity counters reset")
   elseif sub == "wipe" then
     StaticPopup_Show("WOWTCG_WIPE")
   else
-    ns.Print("debug: points <n> | pack | legendary | resetpity | wipe")
+    ns.Print("debug: points <n> | pack | legendary | foil | resetpity | wipe")
   end
 end
 

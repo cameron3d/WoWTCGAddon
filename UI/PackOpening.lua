@@ -266,7 +266,7 @@ function Pack.Reveal(widget)
   if widget.revealed or not widget.result then return end
   widget.revealed = true
   local r = widget.result
-  widget:Flip({ count = r.count, isNew = r.isNew }, function(w)
+  widget:Flip({ count = r.count, isNew = r.isNew, foil = r.isFoil }, function(w)
     -- Count completed flips (not started ones): the legendary flip runs
     -- 0.9s vs 0.25s, and the summary must wait for the slowest reveal.
     Pack.revealedCount = Pack.revealedCount + 1

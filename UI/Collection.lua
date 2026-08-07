@@ -55,8 +55,8 @@ function UI.FilteredCards()
       and (fl.owned == "ALL" or (fl.owned == "OWNED" and count > 0)
         or (fl.owned == "MISSING" and count == 0))
     if matches and q ~= "" then
-      if count == 0 and card.rarity >= 5 then
-        matches = false   -- hidden names must not be searchable
+      if count == 0 then
+        matches = false   -- locked cards are anonymous; names must not be searchable
       else
         matches = card.name:lower():find(q, 1, true) ~= nil
       end
@@ -447,7 +447,8 @@ function UI.RefreshGrid()
     if card then
       local count = ns.db.collection[card.id] or 0
       if count > 0 then
-        w:SetCard(card, { count = count })
+        local foils = (ns.db.foils and ns.db.foils[card.id]) or 0
+        w:SetCard(card, { count = count, foil = foils > 0, foilCount = foils })
         w.tooltipExtra = count > 1
           and ("Right-click: dust a duplicate (+" .. ns.DUST_VALUES[card.rarity] .. ")")
           or nil
@@ -527,7 +528,8 @@ function UI.ShowPreview(card)
     tinsert(UISpecialFrames, "WoWTCGPreviewFrame")
   end
   local count = ns.db.collection[card.id] or 0
-  previewFrame.widget:SetCard(card, { count = count })
+  local foils = (ns.db.foils and ns.db.foils[card.id]) or 0
+  previewFrame.widget:SetCard(card, { count = count, foil = foils > 0, foilCount = foils })
   previewFrame.widget.tooltipExtra = "Click to close"
   previewFrame:Show()
 end

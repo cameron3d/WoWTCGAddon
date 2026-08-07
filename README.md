@@ -26,7 +26,10 @@ The folder must be named `WoWTCG`. If the game client is newer than the
 
 A pack costs **100 points** and contains 5 cards. Every pack holds at least one
 Uncommon+; pity guarantees an Epic+ at 10 barren packs and a Legendary by 40.
-Duplicates can be dusted for points: 1/2/5/15/40/150 by rarity.
+Every card has a 1-in-20 chance of being a **foil** (any rarity) — foils shimmer
+in the pack screen and in your binder. Duplicates can be dusted for points:
+1/2/5/15/40/150 by rarity (non-foil spares are dusted first). Cards you have
+not unlocked appear as anonymous "? ? ?" silhouettes in the binder.
 
 ## Commands
 
@@ -38,7 +41,7 @@ Duplicates can be dusted for points: 1/2/5/15/40/150 by rarity.
     /tcg config announce OFF|GUILD|PARTY|SAY|EMOTE
     /tcg config minrarity 1-6
     /tcg config sounds on|off
-    /tcg debug            testing helpers (grant points/packs, force legendary, wipe)
+    /tcg debug            testing helpers (grant points/packs, force legendary/foil, wipe)
 
 Left-click cards in the pack screen to flip them one at a time; right-click to
 reveal all. In the binder: left-click a card to preview it, right-click to dust
